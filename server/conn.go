@@ -245,7 +245,10 @@ func(client *Conn) ReadMessage(ctx context.Context)(error){
 
 			//construct the messageSendOb
 			newMsg := newChanMessage(client,message)
-			client.activeRoom.messages.appendMessage(client, message)
+
+			//@todo: Implement an appendMessage channel that will automatically listen to messages
+			//@todo: set the room to actively listen to messages in a separate goroutine that runs whenever a room listens
+			client.activeRoom.messages.appendMessage(client.ClientId, message)
 			client.activeRoom.broadcast <- newMsg 
 
 		}
@@ -286,6 +289,7 @@ func (client *Conn) WriteMessage(ctx context.Context)(error){
 func (client *Conn) Close(ctx context.Context)(error){
 	closeCtx, cancel := context.WithCancel(ctx)
 	defer func(){
+		//here the channel sets that it does not receive any incoming messages
 		close(client.send)
 		cancel()
 		err := client.Conn.Close()
